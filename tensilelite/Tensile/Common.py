@@ -72,6 +72,14 @@ globalParameters["SyncsPerBenchmark"] = 1         # how iterations of the stream
 globalParameters["EnqueuesPerSync"] = 1           # how many solution enqueues to perform per synchronization
 globalParameters["MaxEnqueuesPerSync"] = -1       # max solution enqueues to perform per synchronization
 globalParameters["SleepPercent"] = 300            # how long to sleep after every data point: 25 means 25% of solution time. Sleeping lets gpu cool down more.
+globalParameters["SkipSlowSolutionRatio"] = 0.0   # Skip slow solution during warm-up stage.
+# The valid range of this ratio is (0.0 ~ 1.0), and 0.0 means no skipping.
+# Skip condition:  warm-up time * ratio > current best sol's warm-up time
+# Suggestion:
+#     Small size :  0.5
+#     Medium size: 0.75
+#     Large size :  0.9
+
 # cProfile
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
 # validation
@@ -287,6 +295,8 @@ globalParameters["RotatingMode"] = 0 # Default is 0, allocated in order A0B0C0D0
 globalParameters["BuildIdKind"] = "sha1"
 globalParameters["ValidateLibrary"] = False
 globalParameters["AsmDebug"] = False # Set to True to keep debug information for compiled code objects
+
+globalParameters["UseEffLike"] = True # Set to False to use winnerGFlops as the performance metric
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
