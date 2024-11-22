@@ -105,6 +105,8 @@ constexpr const char* rocblaslt_transpose_letter(hipblasOperation_t op)
         return "N";
     case HIPBLAS_OP_T:
         return "T";
+    case HIPBLAS_OP_C:
+        return "C";
     default:
         return "invalidTranspose";
     }
