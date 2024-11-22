@@ -64,6 +64,15 @@ constexpr const char* rocblaslt_datatype_string(hipDataType type)
     }
 }
 
+bool rocblaslt_is_complex_datatype(hipDataType type)
+{
+    return type == HIP_C_32F  || type == HIP_C_64F || type == HIP_C_16F ||
+           type == HIP_C_8I   || type == HIP_C_8U  || type == HIP_C_32I ||
+           type == HIP_C_32U || type == HIP_C_16BF || type == HIP_C_4I  ||
+           type == HIP_C_4U  || type == HIP_C_16I || type == HIP_C_16U  ||
+           type == HIP_C_64I || type == HIP_C_64U;
+}
+
 constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
 {
     switch(type)
