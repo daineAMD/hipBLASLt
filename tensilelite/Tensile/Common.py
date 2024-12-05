@@ -84,6 +84,7 @@ globalParameters["SkipSlowSolutionRatio"] = 0.0   # Skip slow solution during wa
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
 # validation
 globalParameters["NumElementsToValidate"] = 128   # number of elements to validate, 128 will be evenly spaced out (with prime number stride) across C tensor
+globalParameters["NumElementsToValidateWinner"] = 0   # number of elements to validate in LibraryClient stage, the exact number to be validated is max(NumElementsToValidate,NumElementsToValidateWinner)
 globalParameters["BoundsCheck"] = 0   # Bounds check
 #1: Perform bounds check to find out of bounds reads/writes.  NumElementsToValidate must be -1.
 #2: Perform bounds check by front side guard page
@@ -102,7 +103,6 @@ globalParameters["SolutionSelectionAlg"] = 1          # algorithm to determine w
 globalParameters["ExpandRanges"] = True          # expand ranges into exact configs before writing logic file.  False ignores ranges.
 globalParameters["ExitAfterKernelGen"] = False     # Exit after generating kernels
 globalParameters["GenerateSourcesAndExit"] = False # Exit after kernel source generation.
-globalParameters["ShowProgressBar"] = True     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["WavefrontWidth"] = 64     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["ExitOnFails"] = 1     # 1: Exit after benchmark run if failures detected.  2: Exit during benchmark run.
 globalParameters["CpuThreads"] = -1  # How many CPU threads to use for kernel generation.  0=no threading, -1 == nproc, N=min(nproc,N).  TODO - 0 sometimes fails with a kernel name error?  0 does not check error codes correctly
@@ -238,6 +238,7 @@ globalParameters["LibraryUpdateComment"] = False                  # Include solu
 # internal, i.e., gets set during startup
 globalParameters["CurrentISA"] = (0,0,0)
 globalParameters["AMDGPUArchPath"] = None      # /opt/rocm/llvm/bin/amdgpu-arch
+globalParameters["ROCmAgentEnumeratorPath"] = None      # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None                  # /opt/rocm/bin/rocm-smi
 globalParameters["AssemblerPath"] = None                # /opt/rocm/llvm/bin/clang++
 globalParameters["WorkingPath"] = os.getcwd()           # path where tensile called from
@@ -1364,7 +1365,9 @@ defaultProblemType = {
     # AmaxD
     "OutputAmaxD":              False,
     # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
-    "SupportUserArgs":          True
+    "SupportUserArgs":          True,
+    "SwizzleTensorA":           False,
+    "SwizzleTensorB":           False,
     }
 
 defaultProblemSizes = [{"Range": [ [2880], 0, 0 ]}]
@@ -1496,14 +1499,15 @@ def gfxArch(name):
 
     return rv
 
-def detectGlobalCurrentISA():
+
+def detectGlobalCurrentISA_(detectionTool):
   """
   Returns returncode if detection failure
   """
   global globalParameters
 
-  if globalParameters["CurrentISA"] == (0,0,0) and globalParameters["AMDGPUArchPath"]:
-    process = subprocess.run([globalParameters["AMDGPUArchPath"]], stdout=subprocess.PIPE)
+  if globalParameters["CurrentISA"] == (0,0,0) and detectionTool:
+    process = subprocess.run([detectionTool], stdout=subprocess.PIPE)
     if os.name == "nt":
       line = ""
       for line_in in process.stdout.decode().splitlines():
@@ -1526,9 +1530,20 @@ def detectGlobalCurrentISA():
       if len(archList) > 0:
         globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
     if (process.returncode):
-      printWarning("%s exited with code %u" % (globalParameters["AMDGPUArchPath"], process.returncode))
+      printWarning("%s exited with code %u" % (detectionTool, process.returncode))
     return process.returncode
   return 0
+
+
+def detectGlobalCurrentISA():
+  """
+  Returns returncode if detection failure
+  """
+  errorCode = detectGlobalCurrentISA_(globalParameters["AMDGPUArchPath"])
+  if errorCode:
+    printWarning("Attempting to detect ISA with rocm_agent_enumerator")
+    return detectGlobalCurrentISA_(globalParameters["ROCmAgentEnumeratorPath"])
+  return errorCode
 
 def restoreDefaultGlobalParameters():
   """
@@ -1652,10 +1667,13 @@ def assignGlobalParameters( config ):
   globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
 
   # ROCm AMD GPU Arch Path
+  # ROCm Agent Enumerator Path
   if os.name == "nt":
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
+    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")    
   else:
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
+    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm_agent_enumerator")
 
   if "CxxCompiler" in config:
     globalParameters["CxxCompiler"] = config["CxxCompiler"]
