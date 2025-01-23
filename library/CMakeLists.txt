@@ -162,6 +162,8 @@ if(HIPBLASLT_ENABLE_MARKER)
   target_link_libraries(hipblaslt PRIVATE -lroctx64)
 endif()
 
+target_link_libraries(hipblaslt PUBLIC roc:hipblas-common)
+
 # Target properties
 rocm_set_soversion(hipblaslt ${hipblaslt_SOVERSION})
 set_target_properties(hipblaslt PROPERTIES CXX_EXTENSIONS NO)
