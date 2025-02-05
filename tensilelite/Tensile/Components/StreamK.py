@@ -301,7 +301,10 @@ class StreamK(Component):
 
             # Check flag
             module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr), src=sgpr(sCtaIdx), shiftHex=log2(4), comment="flag offset based on CTA index"))
-            module.add(SLoadB32(dst=sgpr(tmpSgpr+2), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="get flag"))
+            if kernel["StreamKAllowCache"] == 1:
+                module.add(SLoadB32(dst=sgpr(tmpSgpr+2), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="get flag"))
+            else
+                module.add(SLoadB32(dst=sgpr(tmpSgpr+2), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=0), comment="get flag"))
 
             module.add(SWaitCnt(lgkmcnt=0, comment="wait for flag load"))
             if kernel["DebugStreamK"] & 2 == 0:

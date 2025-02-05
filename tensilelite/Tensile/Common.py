@@ -991,6 +991,10 @@ validParameters = {
     #   2 = No partials
     #   3 = Nofixup and no partials
     "DebugStreamK": [0, 1, 2, 3],
+    # Use cache for flags and partials, can cause coherence issues for SPX mode
+    #   0 = Don't use cache for partials' flag (i.e. glc == 1) and use force SLC = False and GLC = False for writing partial results
+    #   1 = Use cache for writing flag (i.e. glc == 0 for write) and use NonTemporalWS to set SLC and GLC bits for partial results
+    "StreamKAllowCache": [0, 1],
 
     # Controls desired width (#elements) for loads from global memory -> LDS.
     # and eliminates the pointer unshift logic
@@ -1251,6 +1255,7 @@ defaultBenchmarkCommonParameters = [
     {"StreamKAtomic":             [ 0 ] },
     {"StreamKXCCMapping":         [ 0 ] },
     {"DebugStreamK":              [ 0 ] },
+    {"StreamKAllowCache":         [ 0 ] },
     {"ActivationFused":           [ True  ] },
     {"ActivationFuncCall":        [ True  ] },
     {"ActivationAlt":             [ False ] },

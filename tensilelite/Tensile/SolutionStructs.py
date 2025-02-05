@@ -2221,6 +2221,7 @@ class Solution(collections.abc.Mapping):
       state["StreamKAtomic"] = 0
       state["StreamKXCCMapping"] = 0
       state["DebugStreamK"] = 0
+      state["StreamKAllowCache"] = 0
 
     computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
     state["_WorkspaceSizePerElemC"] = computeBytes

@@ -10480,9 +10480,14 @@ class KernelWriterAssembly(KernelWriter):
         globalOffset = addrCalc.globalOffset
         globalOffset = int((globalOffset/self.states.bpeCexternal) * self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
       elif tc == 'WS':
-        isGlc = True
-        isSlc = True
-        isNT  = kernel["NonTemporalD"] & 0x4
+        # Use NonTemporalD in the case that StreamKAllowCache is set
+        isNT  = kernel["NonTemporalWS"] & 0x4
+        if kernel["StreamKAllowCache"] == 0:
+          isGlc = True
+          isSlc = True
+        else:
+          isGlc = kernel["NonTemporalWS"] & 0x1
+          isSlc = kernel["NonTemporalWS"] & 0x2
 
         bps = self.states.bpeCinternal * ss.cfg.gwvw
         rpv = self.states.bpeCinternal * ss.cfg.gwvw / self.states.bpr
